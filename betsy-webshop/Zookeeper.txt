@@ -1,0 +1,55 @@
+test items for functions:
+1)def list_user_products(user_id):
+1.1)Test line for where user_id does exist in the model User:user_id(1), so the invoke statement will be: list_user_products(1)
+1.2)Test line for where user_id does NOT exist in the model User:user_id(4) so the invoke statement will be: list_user_products(4)
+
+2) def add_product_to_catalog(user_id, product_detail):
+2.1 Testset for where user_id exist and also there is product_detail. 
+The invoke statements will be :
+user_id=1
+   product_detail={
+    'name':'socks',
+    'description':'red socks',
+    'price':1.89,
+    'quantity_description_amount_in_stock':10
+   }
+   add_product_to_catalog(user_id, product_detail)
+   The expected result is:Product added succesfully to the catalog.
+2.2 Test line for where user_id does NOT exist in the model User:user_id(4) so the invoke statement will be: 
+user_id=4
+   product_detail={
+    'name':'socks',
+    'description':'red socks',
+    'price':1.89,
+    'quantity_description_amount_in_stock':10
+   }
+   add_product_to_catalog(user_id, product_detail)
+   The expected result is:User with Id 4 does not exist
+
+2.3:The testset for the function:remove_product(product_id):,assumption there is product_id=5 
+like this:table Product looks like this:
+product_id, name,   description,   price, amount_in_stock, owner
+1         , sweater, red, sweater, 24,99, 2              ,1     (John)  
+2         , trouser, red, trouser, 15,50, 5              ,3     (Helen)
+3         , bike,  , blue, bike,   50,80, 1              ,2     (David)
+4         , blazer , red,blazer,   14.99, 2              ,1     (John)
+5         , socks  , red,socks,     1.89, 10             ,1     (John)
+
+2.3.1 use the following statements to remove product_id=5:
+product_id=5
+remove_product(product_id)
+the result will be:Product with Id 5 has been removed
+ 2.3.2 use the following statement to remove product which do not exist:
+product_id=6 
+the result will be:Product with Id 6 does not exist
+
+2.4: Testset for the function:update_stock(product_id, new_quantity):
+2.4.1. update
+product_id=5
+new_quantity=4
+update_stock(product_id, new_quantity)
+
+2.5 The testset for the function:search(term):
+search("sweater")
+
+save date in github:13 april 2024 18.23 u
