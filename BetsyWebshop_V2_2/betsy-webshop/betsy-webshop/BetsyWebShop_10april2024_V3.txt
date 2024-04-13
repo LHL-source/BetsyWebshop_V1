@@ -1,0 +1,191 @@
+10-4-2024
+models.py
+# Models go here
+from peewee import *
+# Define the models
+db = SqliteDatabase('BetsyWebshop.db')
+class BaseModel(Model):
+    class Meta:
+        database=db
+
+
+#Adress:adress_id, name
+class Address(BaseModel):
+    address_id=AutoField()
+    street=CharField(max_length=40)
+    house_nr=CharField(max_length=5)
+    city=CharField(max_length=30)
+   
+
+#Customer table:id, name, id_adress,id_seller, billing, number_of_products
+class User(BaseModel):
+    user_id=AutoField()
+    username=CharField(max_length=30, null=False, unique=True)
+    user_address_id= ForeignKeyField(Address)
+    billing_info=CharField(max_length=50)
+    #number_of_products=IntegerField()#?is dit nodig 6april24?
+
+
+#product:id, name, description, price_per_unit,quantity_discription, amount_in_stock
+class Product(BaseModel):
+    product_id=AutoField()
+    name=CharField(max_length=20, null=False, index=True)
+    description=CharField(max_length=50, null=False, index=True)
+    price=DecimalField(decimal_places=2,
+        auto_round=True,
+        default=0,
+        constraints=[Check("price < 1000000")],
+)
+    quantity_description_amount_in_stock=IntegerField()
+    owner=ForeignKeyField(User)
+
+
+#Transaction:transaction_id, customer_id,Seller_id, (id_product: c.verlaan vraagt zich af of dit nodig is), quantity_of_purchase_item, price_per??
+#volgens christiaan Verlaan in transaction model toevoegen billing_info en (totale)prijs
+class Transaction(BaseModel):
+    transaction_id=AutoField()
+    buyer=ForeignKeyField(User, backref="transaction")
+    product_bought=ForeignKeyField(Product,backref="products")#ja hier ga je naar model Product en daar vindt je de seller/verkoper/ en dat is de owner
+    quantity_of_bought_item=IntegerField(default=0, constraints=[Check("quantity_bought < 1000")])
+    #billing_info= is onderdeel van model User.billing_info,hoe coderen?
+    price=price=DecimalField(decimal_places=2,
+        auto_round=True,
+        default=0,
+        constraints=[Check("price < 1000000")],
+)
+    
+#Tag:tag_id, name
+class Tag(BaseModel):
+    tag_id=AutoField()
+    name=CharField(max_length=20, null=False, unique=True)
+
+    class Meta:
+        constraints=[SQL('UNIQUE(name)')]
+    
+
+#TagProduct:TagProduct_id, product_id, tag_id
+class TagProduct(BaseModel):
+    tagproduct_id=AutoField()
+    tag=ForeignKeyField(Tag, backref="tagproduct")
+    product=ForeignKeyField(Product, backref="tagproduct")
+
+
+xx xx
+setupdb.py
+from peewee import *
+from models import *
+import os
+
+#functie delete database incl inhoud
+def delete_database():
+   cwd=os.getcwd()
+   database_path=os.path.join(cwd,"BetsyWebshop.db")
+   if os.path.exists(database_path):
+      os.remove(database_path)
+
+#hieronder maak een functie die de database vult met data
+def populate_database():
+    db.connect()
+    db.create_tables([Address,User,Product,Tag,TagProduct])
+    
+    #add to model Adress data:works? yes well done
+    address_list=[
+                 ["Escamplaan","20","Den Haag"],
+                 ["Kalvermarkt","4","Den Haag"],
+                 ["Gouverneurlaan","104","Den Haag"],
+                 ]
+    for i in address_list:
+        Address.create(street=i[0], house_nr=i[1],city=i[2] )    
+
+    #add to model User data ,Works? yes good job, well done, way to go!
+    john_address=Address.get(Address.address_id==2)
+    david_address=Address.get(Address.address_id==3)
+    helen_address=Address.get(Address.address_id==1)
+
+    user_list=[
+              ["John",john_address,"NL01INGB1234567"],
+              ["David",david_address,"NL02ABNA2345678"],
+              ["Helen",helen_address,"NL03RABO345678"],
+              ]
+    for i in user_list:
+        User.create(username=i[0],user_address_id=i[1],billing_info=i[2])
+   
+   #add to model Product data,works? that is awesome
+    john = User.get(User.user_id == 1)
+    helen= User.get(User.user_id==3)
+    david=User.get(User.user_id==2)
+    product_list=[
+                 ["sweater","red, sweater",24.99,2,john],
+                 ["trouser","red, trouser",15.50,5,helen],
+                 ["bike","blue, bike", 50.80,1,david],
+                 
+                ]
+    for i in product_list:
+        Product.create(name=i[0],description=i[1],price=i[2],quantity_description_amount_in_stock=i[3],owner=i[4])
+    
+ 
+
+    #add to model Tag data, works?yes so awesome, good job, way to go
+    tag_list=[
+                 ["red"],
+                 ["blue",],
+                 ["sweater"],
+                 ["trouser"],
+                 ["bike"],
+                 ]
+    for i in tag_list:
+        Tag.create(name=i[0])    
+
+    #model TagProduct in a table with rows and data works?
+    #create the: red_tag
+    red_tag=Tag.get(Tag.tag_id==1)
+    blue_tag=Tag.get(Tag.tag_id==2)
+    sweater_tag=Tag.get(Tag.tag_id==3)
+    trouser_tag=Tag.get(Tag.tag_id==4)
+    bike_tag=Tag.get(Tag.tag_id==5)
+
+
+    #create the:sweater_product
+    sweater_product=Product.get(Product.product_id==1)
+    trouser_product=Product.get(Product.product_id==2)
+    bike_product=Product.get(Product.product_id==3)
+    #create the tagproduct_list:
+
+    tagproduct_list=[
+                [red_tag,sweater_product],
+                [red_tag,trouser_product],
+                [red_tag,bike_product],
+
+                [blue_tag,bike_product],
+                [blue_tag,bike_product],
+                [blue_tag,bike_product],
+
+                [sweater_tag,sweater_product],
+                [sweater_tag,trouser_product],
+                [sweater_tag,bike_product],
+
+                [trouser_tag,sweater_product],
+                [trouser_tag,trouser_product],
+                [trouser_tag,bike_product],
+
+                [bike_tag,sweater_product],
+                [bike_tag,trouser_product],
+                [bike_tag,bike_product],
+
+                ]
+
+    for i in tagproduct_list:
+        TagProduct.create(tag_id=i[0],product_id=i[1])
+
+
+    db.close()
+if __name__ == "__main__":
+   #delete_database()
+   populate_database()
+   pass
+
+#database vullen met list(lijst)?
+     #zookeepers=["Sander","Han","Rik","Anastatia" ]
+     #Hoofdletter (Zookeeper:class)
+     #for zookeeper in zookeepers:
+         #Zookeep.create(name=zookeeper)#test met run of werkt en check in sqlite view
